@@ -1,0 +1,4 @@
+# ingore all .jpg, data and models files
+*jpg
+/data
+/models
