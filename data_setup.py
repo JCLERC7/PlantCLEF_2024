@@ -3,7 +3,6 @@ import os
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
-from torchvision import datasets, transforms
 from torch.utils.data import ConcatDataset
 
 class MyTrainDataset(Dataset):
