@@ -18,7 +18,7 @@ def ddp_setup():
     init_process_group(backend="nccl")
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
     
-
+# TODO: Changer les arguments !!!
 def main (data_path: str = "data/PlantCLEF2022_Training",
           total_epochs: int = 5,
           batch_size: int = 8,
@@ -26,24 +26,13 @@ def main (data_path: str = "data/PlantCLEF2022_Training",
           save_every: int=2,
           snapshot_path: str = "load/snapshot.pt"):
     
+    # Function to set the seed for reproducibility (default seed = 42)
+    utils.set_seed()
+    
     # Setup target device
     ddp_setup()
     
-    light_dataset = ["PlantCLEF2022_trusted_training_images_1",
-                "PlantCLEF2022_trusted_training_images_9",
-                "PlantCLEF2022_web_training_images_1",
-                "PlantCLEF2022_web_training_images_9"]
-
-    transform = transforms.Compose([transforms.Resize(size=(224,224)),
-                                    transforms.RandomHorizontalFlip(p=0.5),
-                                    transforms.RandomApply([transforms.TrivialAugmentWide(num_magnitude_bins=31)], p=0.5),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    
-    datasets_list = data_setup.Combine_datasets(root=data_path, transform=transform, light_dataset=light_dataset)
-    
-    combine_dataset = data_setup.CustomConcatDataset(datasets_list,
-                                                     batch = batch_size)
+    dataloader = data_setup.Dataloader_Gen(data_dir=, pic_size=, batch=, num_worker=)
     
     training_dataloader = combine_dataset.get_train_dataloader()
     test_dataloader = combine_dataset.get_test_dataloader()
