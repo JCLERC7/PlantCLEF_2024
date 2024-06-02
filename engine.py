@@ -71,7 +71,7 @@ class Trainer:
         train_loss, train_acc = 0, 0
         test_loss, test_acc = 0, 0
         b_sz = len(next(iter(self.train_data))[0])
-        print(f"[GPU{self.global_rank}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
+        print(f"[GPU{self.global_rank}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)} | Time: {datetime.now()}")
         self.train_data.sampler.set_epoch(epoch)
         self.test_data.sampler.set_epoch(epoch)
         # Run one batch at the time

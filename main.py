@@ -4,27 +4,22 @@ Trains a PyTorch image classification model using device-agnostic code.
 import argparse
 import os
 import torch
-import timm
-import data_setup, engine, utils, model
-import torch.optim
+import data_setup, engine, utils, gen_model
 import torch.optim as optim
-from torchvision import transforms
-from torch.utils.data.distributed import DistributedDampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
-import pandas
 
 def ddp_setup():
     init_process_group(backend="nccl")
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
     
-# TODO: Changer les arguments !!!
-def main (data_dir: str = "data/PlantCLEF2022_Training",
-          total_epochs: int = 5,
-          batch_size: int = 8,
-          lr: float = 0.001,
-          save_every: int=2,
-          snapshot_path: str = "load/snapshot.pt"):
+def main (data_dir: str,
+          epochs: int,
+          batch_size: int,
+          lr: float,
+          save_every: int,
+          snapshot_path: str,
+          num_workers: int):
     
     # Function to set the seed for reproducibility (default seed = 42)
     utils.set_seed()
@@ -34,7 +29,7 @@ def main (data_dir: str = "data/PlantCLEF2022_Training",
     
     nbr_classes = len(os.listdir(data_dir))
     
-    dataloader = data_setup.Dataloader_Gen(data_dir=data_dir, pic_size=(518, 518), batch=64, num_worker=2)
+    dataloader = data_setup.Dataloader_Gen(data_dir=data_dir, pic_size=(518, 518), batch=batch_size, num_worker=num_workers)
     
     train_dataloader = dataloader.get_train_dataloader
     test_dataloader = dataloader.get_test_dataloader
@@ -49,22 +44,22 @@ def main (data_dir: str = "data/PlantCLEF2022_Training",
     
     loss_fn = torch.nn.BCELoss()
     
-    model = model.vit_small_dinov2(nbr_classes)
+    model = gen_model.vit_small_dinov2(nbr_classes=nbr_classes)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=8.0e-05)
+    optimizer = optim.Adam(model.parameters(), lr=lr) # 8.0e-05
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=6)
     
     trainer = engine.Trainer(model=model,
                              train_data=train_dataloader,
                              test_data=test_dataloader,
                              optimizer=optimizer,
-                             save_every=2,
+                             save_every=save_every,
                              snapshot_path=snapshot_path,
                              loss_fn=loss_fn,
                              scheduler=scheduler,
                              writer=writer)
     
-    trainer()
+    trainer.train(max_epochs=epochs)
     destroy_process_group()
 
     # Save the model with help from utils.py
@@ -74,12 +69,23 @@ def main (data_dir: str = "data/PlantCLEF2022_Training",
     
 if __name__ == "__main__":
     import sys
-    # parser = argparse.ArgumentParser(description="Simple example of training script using timm.")
-    # parser.add_argument("--data_dir", required=True, help="The data folder on disk")
-    # parser.add_argument("--epochs", required=True, type=int, help="The number of training Epochs")
-    # parser.add_argument("--batch", required=False, help="The size of the batch")
-    # args = parser.parse_args()
-    # main(data_path=args.data_dir, epochs=args.epochs, batch_size=args.batch)
-    total_epochs = int(sys.argv[1])
-    save_every = int(sys.argv[2])
-    main(save_every=save_every, total_epochs=total_epochs)
+    parser = argparse.ArgumentParser(description="Simple example of training script using Dino.")
+    parser.add_argument("--data_dir", required=False, type=str, default="data/PlantCLEF2022_Training", help="The data folder on disk")
+    parser.add_argument("--epochs", required=False, type=int, default=100, help="The number of training Epochs")
+    parser.add_argument("--batch", required=False, type=int, default=32, help="The size of the batch")
+    parser.add_argument("--lr", required=False, type=float, default=8.0e-05, help="The learning rate used for the training")
+    parser.add_argument("--save_every", required=False, type=int, default=2, help="How often the model is saved per epochs during the trainning")
+    parser.add_argument("--snapshot_path", required=False, type=str, default="load/snapshot.pt", help="File location of the intermadiate saved model")
+    parser.add_argument("--num_workers", required=False, type=int, choices=[0, 1, 2, 3, 4, 5], default=2, help="Number of process running")
+    args = parser.parse_args()
+    
+    main(data_path=args.data_dir,
+         epochs=args.epochs,
+         batch_size=args.batch,
+         lr=args.lr,
+         save_every=args.save_every,
+         snapshot_path=args.snapshot_path,
+         num_workers=args.num_workers)
+    # total_epochs = int(sys.argv[1])
+    # save_every = int(sys.argv[2])
+    # main(save_every=save_every, total_epochs=total_epochs)
