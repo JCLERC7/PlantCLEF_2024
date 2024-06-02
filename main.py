@@ -5,7 +5,7 @@ import argparse
 import os
 import torch
 import timm
-import data_setup, engine, utils
+import data_setup, engine, utils, model
 import torch.optim
 import torch.optim as optim
 from torchvision import transforms
@@ -19,7 +19,7 @@ def ddp_setup():
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
     
 # TODO: Changer les arguments !!!
-def main (data_path: str = "data/PlantCLEF2022_Training",
+def main (data_dir: str = "data/PlantCLEF2022_Training",
           total_epochs: int = 5,
           batch_size: int = 8,
           lr: float = 0.001,
@@ -32,34 +32,39 @@ def main (data_path: str = "data/PlantCLEF2022_Training",
     # Setup target device
     ddp_setup()
     
-    dataloader = data_setup.Dataloader_Gen(data_dir=data_path, pic_size=, batch=, num_worker=)
+    nbr_classes = len(os.listdir(data_dir))
     
-    training_dataloader = combine_dataset.get_train_dataloader()
-    test_dataloader = combine_dataset.get_test_dataloader()
-    loss_fn = torch.nn.CrossEntropyLoss()
+    dataloader = data_setup.Dataloader_Gen(data_dir=data_dir, pic_size=(518, 518), batch=64, num_worker=2)
     
-    classes = combine_dataset.classes
+    train_dataloader = dataloader.get_train_dataloader
+    test_dataloader = dataloader.get_test_dataloader
+    valid_dataloader = dataloader.get_validation_dataloader
+    
+    cid_to_spid = utils.load_class_mapping("models/pretrained_models/class_mapping.txt")
+    spid_to_sp = utils.load_species_mapping("models/pretrained_models/species_id_to_name.txt")
+    
+    writer = utils.create_writer("Run_3",
+                                 "vit_small_patch14_reg4_dinov2",
+                                 "lr-8.0e-05_epoch-100_batch-24_light_dataset")
+    
+    loss_fn = torch.nn.BCELoss()
+    
+    model = model.vit_small_dinov2(nbr_classes)
 
-    # Create model with help from model_builder.py
-    # model = timm.create_model("eva02_base_patch14_448.mim_in22k_ft_in22k", pretrained=True, num_classes=len(class_names)).to(device)
-    model = timm.create_model("eva02_tiny_patch14_224.mim_in22k", pretrained=True, num_classes=len(classes))
+    optimizer = torch.optim.Adam(model.parameters(), lr=8.0e-05)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=6)
     
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
-    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
-    
-    writer = engine.create_writer("Test", "Eva02_224_in22k")
-    
-    Trainer = engine.Trainer(model=model,
-                             train_data=training_dataloader,
+    trainer = engine.Trainer(model=model,
+                             train_data=train_dataloader,
                              test_data=test_dataloader,
                              optimizer=optimizer,
-                             save_every=save_every,
+                             save_every=2,
                              snapshot_path=snapshot_path,
                              loss_fn=loss_fn,
                              scheduler=scheduler,
                              writer=writer)
     
-    Trainer.train(total_epochs)
+    trainer()
     destroy_process_group()
 
     # Save the model with help from utils.py
