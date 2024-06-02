@@ -19,7 +19,8 @@ def main (data_dir: str,
           lr: float,
           save_every: int,
           snapshot_path: str,
-          num_workers: int):
+          num_workers: int,
+          fully_trained_model: str):
     
     # Function to set the seed for reproducibility (default seed = 42)
     utils.set_seed()
@@ -65,7 +66,7 @@ def main (data_dir: str,
     # Save the model with help from utils.py
     utils.save_model(model=model,
                     target_dir="models",
-                    model_name="05_going_modular_script_mode_tinyvgg_model.pth")
+                    model_name=fully_trained_model)
     
 if __name__ == "__main__":
     import sys
@@ -77,6 +78,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_every", required=False, type=int, default=2, help="How often the model is saved per epochs during the trainning")
     parser.add_argument("--snapshot_path", required=False, type=str, default="load/snapshot.pt", help="File location of the intermadiate saved model")
     parser.add_argument("--num_workers", required=False, type=int, choices=[0, 1, 2, 3, 4, 5], default=2, help="Number of process running")
+    parser.add_argument("--fully_trained_model", required=False, type=str, default="Small_Dinov2_trained_Vx")
     args = parser.parse_args()
     
     main(data_path=args.data_dir,
@@ -85,7 +87,8 @@ if __name__ == "__main__":
          lr=args.lr,
          save_every=args.save_every,
          snapshot_path=args.snapshot_path,
-         num_workers=args.num_workers)
+         num_workers=args.num_workers,
+         fully_trained_model=args.fully_trained_model)
     # total_epochs = int(sys.argv[1])
     # save_every = int(sys.argv[2])
     # main(save_every=save_every, total_epochs=total_epochs)
