@@ -124,14 +124,3 @@ class Trainer:
                 self._save_snapshot(epoch)
         # Close the writer
         self.writer.close()
-    
-def create_writer( experiment_name: str, model_name: str, extra: str=None):
-    timestamp = datetime.now().strftime("%Y-%m-%d")
-    if extra:
-        # Create log directory path
-        log_dir = os.path.join("runs", timestamp, experiment_name, model_name, extra)
-    else:
-        log_dir = os.path.join("runs", timestamp, experiment_name, model_name)
-    
-    print(f"[INFO] Created SummaryWriter, saving to: {log_dir}...")
-    return SummaryWriter(log_dir=log_dir)

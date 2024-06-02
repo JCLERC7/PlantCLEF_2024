@@ -32,7 +32,7 @@ def main (data_path: str = "data/PlantCLEF2022_Training",
     # Setup target device
     ddp_setup()
     
-    dataloader = data_setup.Dataloader_Gen(data_dir=, pic_size=, batch=, num_worker=)
+    dataloader = data_setup.Dataloader_Gen(data_dir=data_path, pic_size=, batch=, num_worker=)
     
     training_dataloader = combine_dataset.get_train_dataloader()
     test_dataloader = combine_dataset.get_test_dataloader()
