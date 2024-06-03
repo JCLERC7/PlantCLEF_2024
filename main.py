@@ -81,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument("--fully_trained_model", required=False, type=str, default="Small_Dinov2_trained_Vx")
     args = parser.parse_args()
     
-    main(data_path=args.data_dir,
+    main(data_dir=args.data_dir,
          epochs=args.epochs,
          batch_size=args.batch,
          lr=args.lr,
