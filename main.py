@@ -11,7 +11,6 @@ from torch.distributed import init_process_group, destroy_process_group
 
 def ddp_setup():
     init_process_group(backend="nccl")
-    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
     
 def main (data_dir: str,
           epochs: int,
@@ -30,22 +29,24 @@ def main (data_dir: str,
     
     nbr_classes = len(os.listdir(data_dir))
     
-    dataloader = data_setup.Dataloader_Gen(data_dir=data_dir, pic_size=(518, 518), batch=batch_size, num_worker=num_workers)
+    dataloader = data_setup.Dataloader_Gen(data_dir=data_dir, pic_size=(224, 224), batch=batch_size, num_worker=num_workers)
     
-    train_dataloader = dataloader.get_train_dataloader
-    test_dataloader = dataloader.get_test_dataloader
-    valid_dataloader = dataloader.get_validation_dataloader
+    train_dataloader = dataloader.get_train_dataloader()
+    test_dataloader = dataloader.get_test_dataloader()
+    valid_dataloader = dataloader.get_validation_dataloader()
     
     cid_to_spid = utils.load_class_mapping("models/pretrained_models/class_mapping.txt")
     spid_to_sp = utils.load_species_mapping("models/pretrained_models/species_id_to_name.txt")
     
-    writer = utils.create_writer("Run_3",
+    writer = utils.create_writer("Run_4",
                                  "vit_small_patch14_reg4_dinov2",
-                                 "lr-8.0e-05_epoch-100_batch-24_light_dataset")
+                                 "lr-8.0e-05_epoch-10_batch-12_light_dataset")
     
     loss_fn = torch.nn.BCELoss()
     
-    model = gen_model.vit_small_dinov2(nbr_classes=nbr_classes)
+    model_creator = gen_model.vit_small_dinov2
+    model = model_creator.creat_model(nbr_classes=nbr_classes)
+    
 
     optimizer = optim.Adam(model.parameters(), lr=lr) # 8.0e-05
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=6)
@@ -71,9 +72,9 @@ def main (data_dir: str,
 if __name__ == "__main__":
     import sys
     parser = argparse.ArgumentParser(description="Simple example of training script using Dino.")
-    parser.add_argument("--data_dir", required=False, type=str, default="data/PlantCLEF2022_Training", help="The data folder on disk")
-    parser.add_argument("--epochs", required=False, type=int, default=100, help="The number of training Epochs")
-    parser.add_argument("--batch", required=False, type=int, default=32, help="The size of the batch")
+    parser.add_argument("-p", "--data_dir", required=False, type=str, default="data/PlantCLEF2022_Training", help="The data folder on disk")
+    parser.add_argument("--epochs", required=False, type=int, default=10, help="The number of training Epochs")
+    parser.add_argument("--batch", required=False, type=int, default=12, help="The size of the batch")
     parser.add_argument("--lr", required=False, type=float, default=8.0e-05, help="The learning rate used for the training")
     parser.add_argument("--save_every", required=False, type=int, default=2, help="How often the model is saved per epochs during the trainning")
     parser.add_argument("--snapshot_path", required=False, type=str, default="load/snapshot.pt", help="File location of the intermadiate saved model")

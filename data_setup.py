@@ -3,7 +3,7 @@ import os
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
-from torch.utils.data import ConcatDataset
+
 
 class Dataloader_Gen(Dataset):
     def __init__(self, data_dir: str, num_worker: int, pic_size=(518, 518), batch: int=64):
@@ -43,29 +43,26 @@ class Dataloader_Gen(Dataset):
         self.val_size = self.dataset_size - self.train_size - self.test_size
         
         self.train_data, self.test_data, self.validation_data = torch.utils.data.random_split(self.dataset,
-                                                                                              [self.train_size, self.test_size, self.validation_size])
+                                                                                              [self.train_size, self.test_size, self.val_size])
         
-    def get_train_dataloader(self, num_workers=1):
+    def get_train_dataloader(self):
         return DataLoader(self.train_data,
                           batch_size=self.batch,
                           shuffle=False,
-                          num_workers=num_workers,
                           pin_memory=True,
                           sampler=DistributedSampler(self.train_data))
     
-    def get_test_dataloader(self, num_workers=1):
+    def get_test_dataloader(self):
         return DataLoader(self.test_data,
                           batch_size=self.batch,
                           shuffle=False,
-                          num_workers=num_workers,
                           pin_memory=True,
                           sampler=DistributedSampler(self.test_data))
         
-    def get_validation_dataloader(self, num_workers=1):
+    def get_validation_dataloader(self):
         return DataLoader(self.validation_data,
                           batch_size=self.batch,
                           shuffle=False,
-                          num_workers=num_workers,
                           pin_memory=True,
                           sampler=DistributedSampler(self.validation_data))
         
