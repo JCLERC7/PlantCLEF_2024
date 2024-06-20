@@ -87,8 +87,8 @@ class Trainer:
             self.model.eval()
             with torch.inference_mode():
                 for source, targets in self.test_data:
-                    source = source.to(self.local_rank)
-                    targets = targets.to(self.local_rank)
+                    source = source.to(self.gpu_id)
+                    targets = targets.to(self.gpu_id)
                     loss, accu = self._test_batch(source, targets)
                     test_loss += loss
                     test_acc += accu
@@ -109,8 +109,8 @@ class Trainer:
 
     def _save_snapshot(self, epoch):
         snapshot = {}
-        snapshot["MODEL_STATE"] = self.model.module.state_dict()
-        snapshot["EPOCHS_RUN"] = epoch,
+        snapshot["MODEL_STATE"] = self.model.state_dict()
+        snapshot["EPOCHS_RUN"] = epoch
         
         torch.save(snapshot, self.snapshot_path)
         print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")

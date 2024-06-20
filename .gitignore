@@ -1,7 +1,8 @@
 # ingore all .jpg, data and models files
 *jpg
+nohup.out
 /data
 /models
-/runs/2024-06-06
+/runs
 semantic_segmentation.ipynb
 Test_VM.py

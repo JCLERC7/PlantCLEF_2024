@@ -40,7 +40,7 @@ def main (data_dir: str,
     
     writer = utils.create_writer("Run_4",
                                  "vit_small_patch14_reg4_dinov2",
-                                 "lr-8.0e-05_epoch-10_batch-12_light_dataset")
+                                 "lr-{lr}_epoch-{epochs}_batch-{batch_size}_light_dataset")
     
     loss_fn = torch.nn.BCELoss()
     
@@ -73,13 +73,13 @@ if __name__ == "__main__":
     import sys
     parser = argparse.ArgumentParser(description="Simple example of training script using Dino.")
     parser.add_argument("-p", "--data_dir", required=False, type=str, default="data/PlantCLEF2022_Training", help="The data folder on disk")
-    parser.add_argument("--epochs", required=False, type=int, default=10, help="The number of training Epochs")
-    parser.add_argument("--batch", required=False, type=int, default=12, help="The size of the batch")
+    parser.add_argument("-e", "--epochs", required=False, type=int, default=10, help="The number of training Epochs")
+    parser.add_argument("--batch", required=False, type=int, default=24, help="The size of the batch")
     parser.add_argument("--lr", required=False, type=float, default=8.0e-05, help="The learning rate used for the training")
     parser.add_argument("--save_every", required=False, type=int, default=2, help="How often the model is saved per epochs during the trainning")
-    parser.add_argument("--snapshot_path", required=False, type=str, default="load/snapshot.pt", help="File location of the intermadiate saved model")
+    parser.add_argument("--snapshot_path", required=False, type=str, default="models/snapshot/snapshot.pt", help="File location of the intermadiate saved model")
     parser.add_argument("--num_workers", required=False, type=int, choices=[0, 1, 2, 3, 4, 5], default=2, help="Number of process running")
-    parser.add_argument("--fully_trained_model", required=False, type=str, default="Small_Dinov2_trained_Vx")
+    parser.add_argument("--fully_trained_model", required=False, type=str, default="Small_Dinov2_trained_Vx.pth")
     args = parser.parse_args()
     
     main(data_dir=args.data_dir,
