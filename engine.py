@@ -11,6 +11,7 @@ from tqdm.auto import tqdm
 from torchinfo import summary
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
+from sklearn.metrics import accuracy_score
 
 class Trainer:
     def __init__(
@@ -55,14 +56,14 @@ class Trainer:
         train_pred_labels = torch.round(output)
         loss.backward()
         self.optimizer.step()
-        return loss.item(), ((train_pred_labels == targets).sum().item()/torch.numel(train_pred_labels))
+        return loss.item(), accuracy_score(y_true=targets, y_pred=train_pred_labels, normalize=False)
         
         
     def _test_batch(self, source, targets):
         test_output = self.model(source)
         loss = self.loss_fn(test_output, targets)
         test_pred_labels = torch.round(test_output)
-        return loss.item(), ((test_pred_labels == targets).sum().item()/torch.numel(test_pred_labels))
+        return loss.item(), accuracy_score(y_true=targets, y_pred=test_pred_labels, normalize=False)
         
 
     def _run_epoch(self, epoch):
@@ -94,16 +95,14 @@ class Trainer:
                     test_acc += accu
             test_loss = test_loss / len(self.test_data)
             test_acc = test_acc / len(self.test_data)
-            
+            if self.writer:
+                self.writer.add_scalar("test/Loss", test_loss, epoch)
+                self.writer.add_scalar("test/Accuracy", test_acc, epoch)
+                
+                
         if self.writer:
-            self.writer.add_scalars(main_tag="Loss",
-                               tag_scalar_dict={"train_loss": train_loss,
-                                                "test_loss": test_loss},
-                               global_step=epoch)
-            self.writer.add_scalars(main_tag="Accuracy", 
-                               tag_scalar_dict={"train_acc": train_acc,
-                                                "test_acc": test_acc}, 
-                               global_step=epoch)
+            self.writer.add_scalar("train/Loss", train_loss, epoch)
+            self.writer.add_scalar("train/Accuracy", train_acc, epoch)
         else:
             pass
 

@@ -90,6 +90,3 @@ if __name__ == "__main__":
          snapshot_path=args.snapshot_path,
          num_workers=args.num_workers,
          fully_trained_model=args.fully_trained_model)
-    # total_epochs = int(sys.argv[1])
-    # save_every = int(sys.argv[2])
-    # main(save_every=save_every, total_epochs=total_epochs)
