@@ -11,6 +11,7 @@ from tqdm.auto import tqdm
 from torchinfo import summary
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
+from sklearn.metrics import accuracy_score
 
 class Trainer:
     def __init__(
@@ -54,17 +55,17 @@ class Trainer:
         self.optimizer.zero_grad()
         output = self.model(source)
         loss = self.loss_fn(output, targets)
-        train_pred_labels = output.argmax(dim=1)
+        train_pred_labels = torch.round(output)
         loss.backward()
         self.optimizer.step()
-        return loss.item(), ((train_pred_labels == targets).sum().item()/len(train_pred_labels))
+        return loss.item(), accuracy_score(y_true=targets.cpu().detach().numpy(), y_pred=train_pred_labels.cpu().detach().numpy(), normalize=True)
         
         
     def _test_batch(self, source, targets):
         test_output = self.model(source)
         loss = self.loss_fn(test_output, targets)
-        test_pred_labels = test_output.argmax(dim=1)
-        return loss.item(), ((test_pred_labels == targets).sum().item()/len(test_pred_labels))
+        test_pred_labels = torch.round(test_output)
+        return loss.item(), accuracy_score(y_true=targets.cpu().detach().numpy(), y_pred=test_pred_labels.cpu().detach().numpy(), normalize=True)
         
 
     def _run_epoch(self, epoch):
@@ -85,7 +86,7 @@ class Trainer:
         train_loss = train_loss / len(self.train_data)
         train_acc = train_acc / len(self.train_data)
             
-        if epoch % 5 == 0 and epoch != 0:
+        if epoch % 2 == 0:
             self.model.eval()
             with torch.inference_mode():
                 for source, targets in self.test_data:
@@ -97,22 +98,21 @@ class Trainer:
             test_loss = test_loss / len(self.test_data)
             test_acc = test_acc / len(self.test_data)
             
+            if self.writer:
+                self.writer.add_scalar("test/Loss", test_loss, epoch)
+                self.writer.add_scalar("test/Accuracy", test_acc, epoch)
+                
+                
         if self.writer:
-            self.writer.add_scalars(main_tag="Loss",
-                               tag_scalar_dict={"train_loss": train_loss,
-                                                "test_loss": test_loss},
-                               global_step=epoch)
-            self.writer.add_scalars(main_tag="Accuracy", 
-                               tag_scalar_dict={"train_acc": train_acc,
-                                                "test_acc": test_acc}, 
-                               global_step=epoch)
+            self.writer.add_scalar("train/Loss", train_loss, epoch)
+            self.writer.add_scalar("train/Accuracy", train_acc, epoch)
         else:
             pass
 
     def _save_snapshot(self, epoch):
         snapshot = {
-            "MODEL_STATE": self.model.module.state_dict(),
-            "EPOCHS_RUN": epoch,
+            "MODEL_STATE": self.model.state_dict(),
+            "EPOCHS_RUN": epoch
         }
         torch.save(snapshot, self.snapshot_path)
         print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
