@@ -39,7 +39,7 @@ def main (data_dir: str,
     cid_to_spid = utils.load_class_mapping("models/pretrained_models/class_mapping.txt")
     spid_to_sp = utils.load_species_mapping("models/pretrained_models/species_id_to_name.txt")
     
-    writer = utils.create_writer("Run_3",
+    writer = utils.create_writer("Run_5",
                                  "vit_small_patch14_reg4_dinov2",
                                  "lr-8.0e-05_epoch-100_batch-24_light_dataset")
     

@@ -2,5 +2,7 @@
 *jpg
 /data
 /models
+/runs
 semantic_segmentation.ipynb
+Testing.ipynb
 Test_VM.py
