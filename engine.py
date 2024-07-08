@@ -56,14 +56,14 @@ class Trainer:
         train_pred_labels = torch.round(output)
         loss.backward()
         self.optimizer.step()
-        return loss.item(), accuracy_score(y_true=targets, y_pred=train_pred_labels, normalize=False)
+        return loss.item(), accuracy_score(y_true=targets.cpu().detach().numpy(), y_pred=train_pred_labels.cpu().detach().numpy(), normalize=True)
         
         
     def _test_batch(self, source, targets):
         test_output = self.model(source)
         loss = self.loss_fn(test_output, targets)
         test_pred_labels = torch.round(test_output)
-        return loss.item(), accuracy_score(y_true=targets, y_pred=test_pred_labels, normalize=False)
+        return loss.item(), accuracy_score(y_true=targets.cpu().detach().numpy(), y_pred=test_pred_labels.cpu().detach().numpy(), normalize=True)
         
 
     def _run_epoch(self, epoch):
@@ -84,7 +84,7 @@ class Trainer:
         train_loss = train_loss / len(self.train_data)
         train_acc = train_acc / len(self.train_data)
             
-        if epoch % 5 == 0 and epoch != 0:
+        if epoch % 2 == 0:
             self.model.eval()
             with torch.inference_mode():
                 for source, targets in self.test_data:

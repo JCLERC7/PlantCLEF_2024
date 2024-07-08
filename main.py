@@ -38,9 +38,9 @@ def main (data_dir: str,
     cid_to_spid = utils.load_class_mapping("models/pretrained_models/class_mapping.txt")
     spid_to_sp = utils.load_species_mapping("models/pretrained_models/species_id_to_name.txt")
     
-    writer = utils.create_writer("Run_4",
+    writer = utils.create_writer("Run_batch",
                                  "vit_small_patch14_reg4_dinov2",
-                                 "lr-{lr}_epoch-{epochs}_batch-{batch_size}_light_dataset")
+                                 f"lr-{lr}_epoch-{epochs}_batch-{batch_size}_light_dataset")
     
     loss_fn = torch.nn.BCELoss()
     
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple example of training script using Dino.")
     parser.add_argument("-p", "--data_dir", required=False, type=str, default="data/PlantCLEF2022_Training", help="The data folder on disk")
     parser.add_argument("-e", "--epochs", required=False, type=int, default=10, help="The number of training Epochs")
-    parser.add_argument("--batch", required=False, type=int, default=24, help="The size of the batch")
+    parser.add_argument("--batch", required=False, type=int, default=48, help="The size of the batch")
     parser.add_argument("--lr", required=False, type=float, default=8.0e-05, help="The learning rate used for the training")
     parser.add_argument("--save_every", required=False, type=int, default=2, help="How often the model is saved per epochs during the trainning")
     parser.add_argument("--snapshot_path", required=False, type=str, default="models/snapshot/snapshot.pt", help="File location of the intermadiate saved model")
