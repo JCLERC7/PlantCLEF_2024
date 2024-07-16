@@ -2,13 +2,10 @@
 Contains functions for training and testing a PyTorch model.
 """
 import os
-from typing import Dict, List, Tuple
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch
-from tqdm.auto import tqdm
-from torchinfo import summary
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from sklearn.metrics import accuracy_score
