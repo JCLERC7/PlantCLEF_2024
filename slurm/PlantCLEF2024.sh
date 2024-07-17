@@ -1,25 +1,31 @@
 #!/bin/bash
 
+#SBATCH --job-name=multiGPU-PlantCLEF_2024
+#SBATCH --partition=shared-gpu
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --gres=gpu:titan:2
+#SBATCH --mem=10G
+#SBATCH --time=1:00:00
+#SBATCH --output=logs/torchrun_%j.log
+#SBATCH --error=logs/torchrun_%j.err
+#SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=joel.clerc1@hes-so.ch
-#SBATCH --mail-type=BEGIN,END, FAIL
-#SBATCH --job-name=multinode-example
-#SBATCH --nodes=4
-#SBATCH --ntasks=4
-#SBATCH --gpus-per-task=1
-#SBATCH --cpus-per-task=4
 
-nodes=( $( scontrol show hostnames $SLURM_JOB_NODELIST ) )
-nodes_array=($nodes)
-head_node=${nodes_array[0]}
-head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)
+mkdir -p logs
 
-echo Node IP: $head_node_ip
-export LOGLEVEL=INFO
+ml load GCC/11.3.0
+ml load OpenMPI/4.1.4
+ml load PyTorch/1.12.1-CUDA-11.7.0
 
-srun torchrun \
---nnodes 4 \
---nproc_per_node 1 \
---rdzv_id $RANDOM \
---rdzv_backend c10d \
---rdzv_endpoint $head_node_ip:29500 \
-/main.py
+echo "Environment Information:"
+which python
+python --version
+which torchrun
+
+echo "GPU Information:"
+nvidia-smi
+
+NUM_PROCESSES=2
+
+torchrun --standalone --nproc_per_node=$NUM_PROCESSES main.py -p data/Training_data/light_dataset -e 10
