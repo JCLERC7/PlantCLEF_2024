@@ -1,12 +1,13 @@
 #!/bin/bash
 
-#SBATCH --job-name=multiGPU-PlantCLEF_2024
-#SBATCH --partition=shared-gpu
-#SBATCH --ntasks=1
+#SBATCH --job-name=multiNODE-PlantCLEF_2024
+#SBATCH --partition=private-ruch-gpu
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node = 1
 #SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:titan:2
-#SBATCH --mem=10G
-#SBATCH --time=1:00:00
+#SBATCH --gres=gpu:3
+#SBATCH --excusive
+#SBATCH --time=7-00:00:00
 #SBATCH --output=logs/torchrun_%j.log
 #SBATCH --error=logs/torchrun_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
@@ -14,9 +15,10 @@
 
 mkdir -p logs
 
-ml load GCC/11.3.0
-ml load OpenMPI/4.1.4
-ml load PyTorch/1.12.1-CUDA-11.7.0
+ml load GCCcore/11.3.0
+ml load Python/3.10.4
+
+nohup tensorboard --logdir logs --host 0.0.00 --port 6006 > logs/tensorboard.log 2>&1
 
 echo "Environment Information:"
 which python
@@ -26,6 +28,13 @@ which torchrun
 echo "GPU Information:"
 nvidia-smi
 
-NUM_PROCESSES=2
+NNODES=2
+NPROC_PER_NODE=3
 
-torchrun --standalone --nproc_per_node=$NUM_PROCESSES main.py -p data/Training_data/light_dataset -e 10
+NODELIST=$(control show hostnames "$SLURM_JOB_NODELIST")
+MASTER_ADDR=$(echo $NODELIST | awk '{print $1}')
+MASTER_PORT=12345
+
+torchrun --nnodes=$NNODES --nproc_per_node=$NPROC_PER_NODE --rdzv_id=$SLURM_JOB_ID --rdzv_backend=c10d --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT main.py -p data/Training_data/dataset -e 100
+
+deactivate

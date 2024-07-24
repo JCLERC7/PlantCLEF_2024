@@ -2,6 +2,7 @@
 Contains functions for training and testing a PyTorch model.
 """
 import os
+import utils
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -16,6 +17,7 @@ class Trainer:
         model: torch.nn.Module,
         train_data: DataLoader,
         test_data: DataLoader,
+        valid_data: DataLoader,
         optimizer: torch.optim.Optimizer,
         save_every: int,
         snapshot_path: str,
@@ -28,10 +30,12 @@ class Trainer:
         self.model = model.to(self.local_rank)
         self.train_data = train_data
         self.test_data = test_data
+        self.valid_data = valid_data
         self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.save_every = save_every
         self.epochs_run = 0
+        self.max_accuracy = 0
         self.snapshot_path = snapshot_path
         self.scheduler = scheduler
         self.writer = writer
@@ -95,6 +99,9 @@ class Trainer:
             test_loss = test_loss / len(self.test_data)
             test_acc = test_acc / len(self.test_data)
             
+            if self.max_accuracy < test_acc:
+                utils.save_model(model=self.model, target_dir="models/final_models", model_name="Small_Dinov2_trained_Vx.pth")
+            
             if self.writer:
                 self.writer.add_scalar("test/Loss", test_loss, epoch)
                 self.writer.add_scalar("test/Accuracy", test_acc, epoch)
@@ -109,7 +116,7 @@ class Trainer:
     def _save_snapshot(self, epoch):
         snapshot = {
             "MODEL_STATE": self.model.state_dict(),
-            "EPOCHS_RUN": epoch
+            "EPOCHS_RUN": epoch,
         }
         torch.save(snapshot, self.snapshot_path)
         print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
@@ -119,5 +126,21 @@ class Trainer:
             self._run_epoch(epoch)
             if self.gpu_id == 0 and epoch % self.save_every == 0:
                 self._save_snapshot(epoch)
+        
+    def validate(self):
+        self.model.eval()
+        with torch.inference_mode():
+            for source, targets in self.valid_data:
+                source = source.to(self.local_rank)
+                targets = targets.to(self.local_rank)
+                loss, accu = self._test_batch(source, targets)
+                valid_loss += loss
+                valid_acc += accu
+        valid_loss = valid_loss / len(self.valid_data)
+        valid_acc = valid_acc / len(self.valid_data)
+        
+        if self.writer:
+            self.writer.add_scalar("test/Loss", valid_loss)
+            self.writer.add_scalar("test/Accuracy", valid_acc)
         # Close the writer
         self.writer.close()

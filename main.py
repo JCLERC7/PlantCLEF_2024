@@ -41,7 +41,7 @@ def main (data_dir: str,
     
     writer = utils.create_writer("Final_model_training",
                                  "vit_small_patch14_reg4_dinov2",
-                                 f"lr-{lr}_epoch-{epochs}_batch-{batch_size}_light_dataset")
+                                 f"lr-{lr}_epoch-{epochs}_batch-{batch_size}_full_dataset")
     
     loss_fn = torch.nn.BCELoss()
     
@@ -54,6 +54,7 @@ def main (data_dir: str,
     trainer = engine.Trainer(model=model,
                              train_data=train_dataloader,
                              test_data=test_dataloader,
+                             valid_data=valid_dataloader,
                              optimizer=optimizer,
                              save_every=save_every,
                              snapshot_path=snapshot_path,
@@ -64,10 +65,10 @@ def main (data_dir: str,
     trainer.train(max_epochs=epochs)
     destroy_process_group()
 
-    # Save the model with help from utils.py
-    utils.save_model(model=model,
-                    target_dir="models/final_models",
-                    model_name=fully_trained_model)
+    # # Save the model with help from utils.py
+    # utils.save_model(model=model,
+    #                 target_dir="models/final_models",
+    #                 model_name=fully_trained_model)
     
 if __name__ == "__main__":
     import sys
