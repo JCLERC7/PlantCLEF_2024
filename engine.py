@@ -104,9 +104,10 @@ class Trainer:
             pass
 
     def _save_snapshot(self, epoch):
-        snapshot = {}
-        snapshot["MODEL_STATE"] = self.model.state_dict()
-        snapshot["EPOCHS_RUN"] = epoch
+        snapshot = {
+            "MODEL_STATE": self.model.module.state_dict(),
+            "EPOCHS_RUN": epoch,
+        }
         
         torch.save(snapshot, self.snapshot_path)
         print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
