@@ -30,11 +30,11 @@ def main (data_dir: str,
     
     nbr_classes = len(os.listdir(data_dir))
     
-    dataloader = data_setup.Dataloader_Gen(data_dir=data_dir, pic_size=(224, 224), batch=batch_size, num_worker=num_workers)
+    dataloader = data_setup.Dataloader_Gen(data_dir=data_dir, pic_size=(224, 224), batch=batch_size)
     
-    train_dataloader = dataloader.get_train_dataloader
-    test_dataloader = dataloader.get_test_dataloader
-    valid_dataloader = dataloader.get_validation_dataloader
+    train_dataloader = dataloader.get_train_dataloader(num_workers=num_workers)
+    test_dataloader = dataloader.get_test_dataloader(num_workers=num_workers)
+    valid_dataloader = dataloader.get_validation_dataloader(num_workers=num_workers)
     
     cid_to_spid = utils.load_class_mapping("models/pretrained_models/class_mapping.txt")
     spid_to_sp = utils.load_species_mapping("models/pretrained_models/species_id_to_name.txt")
@@ -75,11 +75,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple example of training script using Dino.")
     parser.add_argument("-p", "--data_dir", required=False, type=str, default="data/PlantCLEF2022_Training", help="The data folder on disk")
     parser.add_argument("-e", "--epochs", required=False, type=int, default=10, help="The number of training Epochs")
-    parser.add_argument("--batch", required=False, type=int, default=48, help="The size of the batch")
+    parser.add_argument("-b", "--batch", required=False, type=int, default=48, help="The size of the batch")
     parser.add_argument("--lr", required=False, type=float, default=8.0e-05, help="The learning rate used for the training")
     parser.add_argument("--save_every", required=False, type=int, default=2, help="How often the model is saved per epochs during the trainning")
     parser.add_argument("--snapshot_path", required=False, type=str, default="models/snapshot/snapshot.pt", help="File location of the intermadiate saved model")
-    parser.add_argument("--num_workers", required=False, type=int, choices=[0, 1, 2, 3, 4, 5], default=2, help="Number of process running")
+    parser.add_argument("--num_workers", required=False, type=int, choices=[0, 1, 2, 3, 4, 5], default=1, help="Number of process running")
     parser.add_argument("--fully_trained_model", required=False, type=str, default="Small_Dinov2_trained_Vx.pth")
     args = parser.parse_args()
     
